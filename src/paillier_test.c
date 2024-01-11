@@ -48,18 +48,18 @@ int main(){
     mbedtls_mpi_lset(&r1,1234);
     
     mbedtls_mpi_lset(&r2,4321);
-    // 生成密钥
+    // Generate Key
     generateRandomKeys(&keys,NULL);
     mbedtls_mpi_write_string(&m1, 10, buf, sizeof(buf), &olen);
     printf("orignal m1 value is: %s\n", buf);
     mbedtls_mpi_write_string(keys.pub.n, 10, buf, sizeof(buf), &olen);
     printf("orignal g value is: %s\n", buf);
-    // 加密m1值
+    // 加密m1值 Encrypt m1 value
     encrypt(&cm1, &m1, &keys.pub);
     mbedtls_mpi_write_string(&cm1, 10, buf, sizeof(buf), &olen);
     printf("encrypt value: %s\n", buf);
 
-    // 解密m1的值
+    // 解密m1的值 Decrypt the value of m1
     decrypt(&res, &cm1, &keys.priv);
     
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
@@ -67,9 +67,9 @@ int main(){
 
     if( mbedtls_mpi_cmp_mpi(&res,&m1) != 0)
         fprintf(stderr, "decrypt value after encrypt is not compare orignial value");
-    
-    /*-----计算加法----*/
-    // 密文加法
+
+    /*-----计算加法-- Computational addition --*/
+    // 密文加法 Ciphertext addition
     encrypt(&cm2,&m2,&keys.pub);
     enc_mpi_add(&res, &cm2, &cm1, &keys);
     decrypt(&res, &res, &keys.priv);
@@ -77,27 +77,27 @@ int main(){
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m1 add m2 value: %s\n", buf);
 
-    // 明密文加法
+    // 明密文加法 Plaintext addition
     encPlain_mpi_add(&res,&cm1,&r1,&keys);
     decrypt(&res, &res, &keys.priv);
     
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m1 add r1 value: %s\n", buf);
 
-    /*----计算减法----*/
-    // 大减小
+    /*----计算减法-- Calculate subtraction --*/
+    // 大减小 Major reduction
     enc_mpi_sub(&res,&cm2,&cm1,&keys);
     decrypt(&res, &res, &keys.priv);
     
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m2 sub m1 value: %s\n", buf);
-    // 小减大
+    // 小减大 Small decrease large,it should show a error answer
     enc_mpi_sub(&res,&cm1,&cm2,&keys);
     decrypt(&res, &res, &keys.priv);
     
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m1 sub m2 value: %s\n", buf);
-    // 大减小利用修正因子
+    // 大减小利用修正因子 Significant reduction in utilization correction factor
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_entropy_init(&entropy);
@@ -115,7 +115,7 @@ int main(){
     mbedtls_mpi_sub_mpi(&res, &res, &correction_factor);
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m2 sub m1 value(using correction_factor): %s\n", buf);
-    // 小减大利用修正因子
+    // 小减大利用修正因子 Minor reduction and major utilization correction factor
     mbedtls_mpi_fill_random(&correction_factor, 64, mbedtls_ctr_drbg_random, &ctr_drbg);
 
     enc_mpi_sub(&res, &cm1, &cm2, &keys);
@@ -125,7 +125,7 @@ int main(){
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);
     printf("m1 sub m2 value(using correction_factor): %s\n", buf);
 
-    /*----标量乘法----*/
+    /*----标量乘法--scalar multiplication --*/
     mpi_mul_plain(&res,&cm1,&r1,&keys);
     decrypt(&res, &res, &keys.priv);
     mbedtls_mpi_write_string(&res, 10, buf, sizeof(buf), &olen);

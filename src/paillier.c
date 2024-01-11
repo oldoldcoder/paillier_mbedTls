@@ -24,8 +24,8 @@ static int init_seed()
         seed_switch = 1;
     }
 }
-// lcm函数
-// 计算两个大数的最小公倍数
+// lcm函数 LCM function
+// 计算两个大数的最小公倍数 Calculate the least common multiple of two large numbers
 static int mpi_lcm(mbedtls_mpi *result ,const mbedtls_mpi *A,const mbedtls_mpi *B)
 {
     int ret = 1;
@@ -34,17 +34,18 @@ static int mpi_lcm(mbedtls_mpi *result ,const mbedtls_mpi *A,const mbedtls_mpi *
     mbedtls_mpi_init(&product);
     mbedtls_mpi_init(&gcd_result);
 
-    // 计算 A 和 B 的最大公约数
+    // 计算 A 和 B 的最大公约数 Calculate the maximum common divisor of A and B
+
     if ((ret = mbedtls_mpi_gcd(&gcd_result, A , B)) != 0){
         goto end;
     }
 
-    // 计算 A 和 B 的乘积
+    // 计算 A 和 B 的乘积 Calculate the product of A and B
     if ((ret = mbedtls_mpi_mul_mpi(&product, A, B)) != 0){
         goto end;
     }
 
-    // 使用最大公约数计算最小公倍数
+    // 使用最大公约数计算最小公倍数 Calculate the minimum common multiple using the maximum common divisor
     if ((ret = mbedtls_mpi_div_mpi(result, NULL, &product, &gcd_result)) != 0){
         goto end;
     }
@@ -56,7 +57,7 @@ end:
     return ret;
 }
 
-// L函数
+// L函数 L function
 static int L(mbedtls_mpi *res,mbedtls_mpi *x,mbedtls_mpi *n)
 {
     int ret = 1;
@@ -65,7 +66,6 @@ static int L(mbedtls_mpi *res,mbedtls_mpi *x,mbedtls_mpi *n)
 
     if(ret = mbedtls_mpi_sub_int(&tmp,x,1) != 0)
         goto end;
-    // 除法
     if((ret = mbedtls_mpi_div_mpi(res, NULL, &tmp, n)) != 0)
         goto end;
     ret = 0;
@@ -73,7 +73,7 @@ end:
     mbedtls_mpi_free(&tmp);
     return ret;
 }
-// 函数用于为 mbedtls_mpi 结构体的指针申请内存
+// 函数用于为 mbedtls_mpi 结构体的指针申请内存 The function is used for mbedtls_ Pointer to MPI structure to apply for memory
 static int allocate_mpi_on_heap(mbedtls_mpi **mpi_ptr)
 {
     *mpi_ptr = (mbedtls_mpi *)malloc(sizeof(mbedtls_mpi));
@@ -84,11 +84,11 @@ static int allocate_mpi_on_heap(mbedtls_mpi **mpi_ptr)
         return -1;
     }
 
-    mbedtls_mpi_init(*mpi_ptr); // 初始化分配的内存
+    mbedtls_mpi_init(*mpi_ptr); // 初始化分配的内存 Initialize allocated memory
 
-    return 0; // 成功返回 0
+    return 0; // 成功返回 0 Successfully returned 0
 }
-// 申请空间
+// 申请空间 Apply for space
 static int init_paillierKeys(paillierKeys * keys){
     
     allocate_mpi_on_heap(&keys->priv.n);
@@ -106,8 +106,7 @@ static int init_paillierKeys(paillierKeys * keys){
     allocate_mpi_on_heap(&keys->pub.g);
 }
 
-
-// 随机生成密钥
+// 随机生成密钥 Randomly generate key
 int generateRandomKeys(paillierKeys *keys, int *key_len)
 {
     char buf[4000]; // assuse buffer is very large
@@ -126,7 +125,7 @@ int generateRandomKeys(paillierKeys *keys, int *key_len)
         fprintf(stderr,"Key lenght too short,Minimum lenght 32 bits\n");
         goto end;
     }
-    // 初始化数字
+    // 初始化数字 init section....
     
     mbedtls_mpi_init(&tmp1);
     mbedtls_mpi_init(&tmp2);
@@ -139,7 +138,7 @@ int generateRandomKeys(paillierKeys *keys, int *key_len)
     mbedtls_rsa_context rsa_ctx;
     mbedtls_rsa_init(&rsa_ctx, MBEDTLS_RSA_PKCS_V15, MBEDTLS_MD_NONE);
 
-    // 生成随机的质数 P 和 Q
+    // 生成随机的质数 P 和 Q Generate random prime numbers P and Q
     if ((ret = mbedtls_rsa_gen_key(&rsa_ctx, mbedtls_ctr_drbg_random, &CTR_DRBG_CTX,
                                    final_key_1, 65537)) != 0){
         goto end;
@@ -159,12 +158,12 @@ int generateRandomKeys(paillierKeys *keys, int *key_len)
     // 计算g和u
     do
     {
-        // 选择在n2范围内的随机整数
+        // 选择在n2范围内的随机整数 Select random integers within the range of n2
         do
         {
-            mbedtls_mpi_fill_random(&g, mbedtls_mpi_size(&n2), mbedtls_ctr_drbg_random, &CTR_DRBG_CTX); 
-            // 使用 mbedtls_mpi_mod_mpi 函数确保 g < n2
-            mbedtls_mpi_mod_mpi(&g, &g, &n2);
+            mbedtls_mpi_fill_random(&g, mbedtls_mpi_size(&n2), mbedtls_ctr_drbg_random, &CTR_DRBG_CTX);
+            // 使用 mbedtls_mpi_mod_mpi 函数确保 g < n2 Using mbedtls_ MPI_ Mod_ The mpi function ensures that g<n2
+            mbedtls_mpi_mod_mpi(&g, &g, &n2); 
         } while (mbedtls_mpi_cmp_int(&g, 0) == 0);
 
         mbedtls_mpi_exp_mod(&tmp1, &g, &lamda, &n2, NULL); // tmp = g^lamda mod n2
@@ -178,7 +177,7 @@ int generateRandomKeys(paillierKeys *keys, int *key_len)
     } while (1);
 
     init_paillierKeys(keys);
-    // 填充到我们的公钥和私钥里面
+    // 填充到我们的公钥和私钥里面 Fill in our public and private keys
     mbedtls_mpi_copy(keys->priv.lamda,&lamda);
     mbedtls_mpi_copy(keys->priv.mu,&mu);
     mbedtls_mpi_copy(keys->priv.n,&n);
@@ -190,7 +189,7 @@ int generateRandomKeys(paillierKeys *keys, int *key_len)
 
     ret = 0;
 end:
-    // 清理释放资源
+    // 清理释放资源 Clean up and release resources
 
     mbedtls_mpi_free(&tmp1);
     mbedtls_mpi_free(&tmp2);
@@ -216,7 +215,7 @@ int encrypt(mbedtls_mpi *res,const mbedtls_mpi *plain, pubKey *pbkey){
     mbedtls_mpi_init(&r);
     mbedtls_mpi_init(&tmp1);
     mbedtls_mpi_init(&tmp2);
-    // 检测范围是否在 0 - n
+    // 检测范围是否在 0 - n Is the detection range between 0 and n
     if (mbedtls_mpi_cmp_mpi(plain, pbkey->n) >= 0)
     {
         fprintf(stderr,"Message not range in N\n");
@@ -250,7 +249,7 @@ int decrypt(mbedtls_mpi *res,const mbedtls_mpi *c,privKey * pvkey){
     mbedtls_mpi tmp;
     mbedtls_mpi_init(&tmp);
 
-    // 检测范围是否在 0 - n2
+    // 检测范围是否在 0 - n2 Is the detection range between 0 and n2
     if (mbedtls_mpi_cmp_mpi(c, pvkey->n2) >= 0)
     {
         fprintf(stderr,"Message not range in N^2\n");
@@ -286,12 +285,11 @@ end:
     mbedtls_mpi_free(&tmp);
     return ret;
 }
-// 密文 + 明文加法
+// 密文 + 明文加法 Ciphertext+plaintext addition
 int encPlain_mpi_add(mbedtls_mpi *res, const mbedtls_mpi *a, const mbedtls_mpi *Plain, paillierKeys *keys){
     int ret = 1;
     mbedtls_mpi tmp;
     mbedtls_mpi_init(&tmp);
-    // 加密然后再加
     encrypt(&tmp, Plain, &keys->pub);
     if ((ret = mbedtls_mpi_mul_mpi(&tmp, a, &tmp)) != 0)
         goto end;
@@ -301,12 +299,11 @@ end:
     mbedtls_mpi_free(&tmp);
     return ret;
 }
-// 与明文乘法
+// 与明文乘法 Multiplication with plaintext
 int mpi_mul_plain(mbedtls_mpi *res, const mbedtls_mpi *a, const mbedtls_mpi *plain, paillierKeys *keys){
     int ret = 1;
     mbedtls_mpi tmp;
     mbedtls_mpi_init(&tmp);
-    // 求阶乘，计算
     mbedtls_mpi_exp_mod(res,a,plain,keys->priv.n2,NULL);
     ret= 0;
 end:
@@ -314,12 +311,12 @@ end:
     return ret;
 }
 
-// 与密文的减法
+// 与密文的减法 Subtraction from ciphertext
 int enc_mpi_sub(mbedtls_mpi *res, const mbedtls_mpi *a, const mbedtls_mpi *b, paillierKeys *keys){
     int ret = 0;
     mbedtls_mpi tmp;
     mbedtls_mpi_init(&tmp);
-    // 计算模反
+    // 计算模反 Computational inversion
     if ((ret = mbedtls_mpi_inv_mod(&tmp, b, keys->priv.n2)) != 0)
         goto end;
     if((ret = mbedtls_mpi_mul_mpi(res,a,&tmp)) != 0)
