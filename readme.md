@@ -1,7 +1,8 @@
 paillier-mbedTls
 ==========
 
-- Using mbedtls to complete the basic operations of the Paillier algorithm
+Using mbedtls to complete the basic operations of the Paillier algorithm
+
 - Generate Key
 - Encryption
 - Decryption
